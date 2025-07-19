@@ -1,0 +1,31 @@
+{
+  // Cloudflare Pages configuration for contact form example
+  "name": "contact-form-app",
+  "compatibility_date": "2024-01-01",
+  
+  // KV Namespace binding
+  "kv_namespaces": [
+    {
+      "binding": "CONTACT_SUBMISSIONS",
+      // Replace with your actual namespace ID after running: npm run kv:create
+      "id": "YOUR_KV_NAMESPACE_ID"
+    }
+  ],
+  
+  // Environment variables
+  "vars": {
+    // Comma-separated list of allowed origins for CORS
+    // In production, set this to your actual domain(s)
+    "ALLOWED_ORIGINS": "https://yourdomain.com,https://www.yourdomain.com",
+    
+    // Form validation limits
+    "MIN_NAME_LENGTH": 2,
+    "MAX_NAME_LENGTH": 200,
+    "MIN_MESSAGE_LENGTH": 50,
+    "MAX_MESSAGE_LENGTH": 8000
+  }
+  
+  // Set API_KEY secret via wrangler CLI:
+  // wrangler secret put API_KEY
+  // Generate a secure key: openssl rand -hex 32
+}

@@ -1,0 +1,13 @@
+{
+  "name": "cloudflare-contact-form-example",
+  "version": "1.0.0",
+  "description": "Serverless contact form using Cloudflare Pages Functions and KV Store",
+  "scripts": {
+    "dev": "wrangler pages dev public",
+    "deploy": "wrangler pages deploy public",
+    "kv:create": "wrangler kv:namespace create CONTACT_SUBMISSIONS"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
