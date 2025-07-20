@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Get the list of staged files
+STAGED_FILES=$(git diff --cached --name-only)
+
+# Check if any files in cloudflare-contact-form are being committed
+if echo "$STAGED_FILES" | grep -q "^cloudflare-contact-form/"; then
+  echo "Changes detected in cloudflare-contact-form, running checks..."
+  
+  # Change to cloudflare-contact-form directory
+  cd cloudflare-contact-form
+  
+  # Run format check
+  echo "Checking code formatting..."
+  if ! npm run format:check; then
+    echo "❌ Format check failed! Run 'npm run format' to fix."
+    exit 1
+  fi
+  
+  # Run ESLint
+  echo "Running ESLint..."
+  if ! npm run lint; then
+    echo "❌ Lint check failed! Run 'npm run lint:fix' to fix some issues automatically."
+    exit 1
+  fi
+  
+  # Check for CSS files and run stylelint if needed
+  if echo "$STAGED_FILES" | grep -q "^cloudflare-contact-form/.*\.css$"; then
+    echo "Running Stylelint..."
+    if ! npm run lint:css; then
+      echo "❌ CSS lint check failed! Run 'npm run lint:fix:css' to fix some issues automatically."
+      exit 1
+    fi
+  fi
+  
+  echo "✅ All checks passed for cloudflare-contact-form!"
+fi

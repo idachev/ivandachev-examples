@@ -9,6 +9,6 @@ _config-build.yml
 
 *.tmp
 
-*/node_modules
+**/node_modules
 
-*/.wrangler
+**/.wrangler

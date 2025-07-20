@@ -2,10 +2,11 @@
   "name": "cloudflare-contact-form-example",
   "version": "1.0.0",
   "description": "Serverless contact form using Cloudflare Pages Functions and KV Store",
+  "type": "module",
   "scripts": {
     "dev": "wrangler pages dev public",
     "deploy": "wrangler pages deploy public",
-    "kv:create": "wrangler kv:namespace create CONTACT_SUBMISSIONS",
+    "kv:create": "wrangler kv:namespace create kv_contact_submissions_example",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "format:html": "prettier --write \"**/*.html\"",
@@ -18,12 +19,13 @@
     "lint:fix:css": "stylelint \"**/*.css\" --fix"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-sonarjs": "^0.25.1",
-    "prettier": "^3.3.3",
-    "stylelint": "^16.10.0",
-    "stylelint-config-standard": "^36.0.1",
-    "wrangler": "^3.0.0"
+    "@eslint/js": "^9.31.0",
+    "eslint": "^9.31.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-sonarjs": "^3.0.4",
+    "prettier": "^3.6.2",
+    "stylelint": "^16.22.0",
+    "stylelint-config-standard": "^38.0.0",
+    "wrangler": "^4.25.0"
   }
 }

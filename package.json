@@ -1,0 +1,12 @@
+{
+  "name": "ivandachev-examples",
+  "version": "1.0.0",
+  "description": "Collection of code examples and tutorials",
+  "type": "module",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
