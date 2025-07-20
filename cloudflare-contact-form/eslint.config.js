@@ -23,6 +23,10 @@ export default [
         Response: "readonly",
         Request: "readonly",
         URL: "readonly",
+        document: "readonly",
+        window: "readonly",
+        FormData: "readonly",
+        fetch: "readonly",
       },
     },
     plugins: {

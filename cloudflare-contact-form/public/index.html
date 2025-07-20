@@ -110,79 +110,62 @@
           transform: rotate(360deg);
         }
       }
+
+      .error-message {
+        color: #721c24;
+        font-size: 14px;
+        margin-top: 5px;
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <h1>Contact Form</h1>
 
-      <form id="contactForm">
-        <input type="text" name="name" placeholder="Your Name" required minlength="2" maxlength="100" />
+      <form id="contactForm" class="form" action="/api/contact">
+        <input
+          type="text"
+          id="form-name"
+          name="name"
+          placeholder="Your Name"
+          class="form__input"
+          required
+          minlength="2"
+          maxlength="200"
+        />
 
-        <input type="email" name="email" placeholder="Your Email" required maxlength="100" />
+        <input
+          type="email"
+          id="form-email"
+          name="email"
+          placeholder="Your Email"
+          class="form__input"
+          required
+          maxlength="100"
+        />
 
-        <textarea name="message" placeholder="Your Message" required minlength="10" maxlength="1000"></textarea>
+        <textarea
+          id="form-text"
+          name="message"
+          placeholder="Your Message"
+          class="form__input"
+          required
+          minlength="50"
+          maxlength="8000"
+        ></textarea>
 
-        <button type="submit">Send Message</button>
+        <input type="hidden" id="form-redirect_url" value="/success.html" />
 
-        <div class="spinner"></div>
+        <div id="form-submit-holder">
+          <button type="submit">Send Message</button>
+        </div>
+
+        <div class="spinner" id="contact-form-loader"></div>
       </form>
 
       <div id="message" class="message"></div>
     </div>
 
-    <script>
-      const form = document.getElementById("contactForm");
-      const messageDiv = document.getElementById("message");
-      const spinner = document.querySelector(".spinner");
-      const submitButton = form.querySelector('button[type="submit"]');
-
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        // Hide any previous messages
-        messageDiv.style.display = "none";
-        messageDiv.className = "message";
-
-        // Show spinner and disable button
-        spinner.style.display = "block";
-        submitButton.disabled = true;
-        submitButton.textContent = "Sending...";
-
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData);
-
-        try {
-          const response = await fetch("/api/contact", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-          });
-
-          const result = await response.json();
-
-          if (response.ok) {
-            messageDiv.textContent = "Thank you! Your message has been sent successfully.";
-            messageDiv.className = "message success";
-            messageDiv.style.display = "block";
-            form.reset();
-          } else {
-            throw new Error(result.error || "Failed to send message");
-          }
-        } catch (error) {
-          console.error("Error:", error);
-          messageDiv.textContent = error.message || "An error occurred. Please try again later.";
-          messageDiv.className = "message error";
-          messageDiv.style.display = "block";
-        } finally {
-          // Hide spinner and enable button
-          spinner.style.display = "none";
-          submitButton.disabled = false;
-          submitButton.textContent = "Send Message";
-        }
-      });
-    </script>
+    <script src="contact-form-validation.js"></script>
   </body>
 </html>
