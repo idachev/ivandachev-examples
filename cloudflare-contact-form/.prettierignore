@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.wrangler/
+
+# Lock files
+package-lock.json
+
+# Minified files
+*.min.js
+*.min.css
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Config files
+wrangler.jsonc

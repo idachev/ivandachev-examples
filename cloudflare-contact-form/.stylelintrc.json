@@ -1,0 +1,9 @@
+{
+  "extends": "stylelint-config-standard",
+  "rules": {
+    "selector-class-pattern": "^[a-z][a-z0-9-]*$",
+    "declaration-block-single-line-max-declarations": 3,
+    "color-function-notation": "legacy",
+    "alpha-value-notation": "number"
+  }
+}

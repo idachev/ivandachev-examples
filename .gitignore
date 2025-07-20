@@ -1,0 +1,14 @@
+/tmp
+
+.env
+.dev.vars
+
+/.idea
+
+_config-build.yml
+
+*.tmp
+
+*/node_modules
+
+*/.wrangler

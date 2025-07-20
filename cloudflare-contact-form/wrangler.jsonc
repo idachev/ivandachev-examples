@@ -1,9 +1,7 @@
 {
-  // Cloudflare Pages configuration for contact form example
   "name": "contact-form-app",
   "compatibility_date": "2024-01-01",
   
-  // KV Namespace binding
   "kv_namespaces": [
     {
       "binding": "CONTACT_SUBMISSIONS",
@@ -12,17 +10,18 @@
     }
   ],
   
-  // Environment variables
   "vars": {
     // Comma-separated list of allowed origins for CORS
     // In production, set this to your actual domain(s)
     "ALLOWED_ORIGINS": "https://yourdomain.com,https://www.yourdomain.com",
     
-    // Form validation limits
     "MIN_NAME_LENGTH": 2,
     "MAX_NAME_LENGTH": 200,
     "MIN_MESSAGE_LENGTH": 50,
-    "MAX_MESSAGE_LENGTH": 8000
+    "MAX_MESSAGE_LENGTH": 8000,
+    
+    "RATE_LIMIT_WINDOW": 60,  // Time window in seconds (default: 60)
+    "MAX_REQUESTS": 5         // Max requests per window per IP (default: 5)
   }
   
   // Set API_KEY secret via wrangler CLI:

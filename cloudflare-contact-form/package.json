@@ -5,9 +5,25 @@
   "scripts": {
     "dev": "wrangler pages dev public",
     "deploy": "wrangler pages deploy public",
-    "kv:create": "wrangler kv:namespace create CONTACT_SUBMISSIONS"
+    "kv:create": "wrangler kv:namespace create CONTACT_SUBMISSIONS",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format:html": "prettier --write \"**/*.html\"",
+    "format:js": "prettier --write \"**/*.js\"",
+    "format:css": "prettier --write \"**/*.css\"",
+    "format:json": "prettier --write \"**/*.json\"",
+    "lint": "eslint \"**/*.js\"",
+    "lint:fix": "eslint \"**/*.js\" --fix",
+    "lint:css": "stylelint \"**/*.css\"",
+    "lint:fix:css": "stylelint \"**/*.css\" --fix"
   },
   "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-sonarjs": "^0.25.1",
+    "prettier": "^3.3.3",
+    "stylelint": "^16.10.0",
+    "stylelint-config-standard": "^36.0.1",
     "wrangler": "^3.0.0"
   }
 }
