@@ -56,9 +56,13 @@ async function parseFormData(request) {
   const contentType = request.headers.get("Content-Type") || "";
 
   if (contentType.includes("application/json")) {
+
     return await request.json();
+
   } else if (contentType.includes("form-data") || contentType.includes("x-www-form-urlencoded")) {
+
     const formData = await request.formData();
+
     return {
       name: formData.get("name"),
       email: formData.get("email"),
