@@ -1,37 +1,39 @@
 #!/bin/bash
 
+# Main pre-commit hook that delegates to project-specific hooks
+
+set -e
+
 # Get the list of staged files
 STAGED_FILES=$(git diff --cached --name-only)
 
 # Check if any files in cloudflare-contact-form are being committed
 if echo "$STAGED_FILES" | grep -q "^cloudflare-contact-form/"; then
-  echo "Changes detected in cloudflare-contact-form, running checks..."
-
-  # Change to cloudflare-contact-form directory
+  echo "Changes detected in cloudflare-contact-form..."
+  
+  # Get only the cloudflare-contact-form files
+  CF_STAGED_FILES=$(echo "$STAGED_FILES" | grep "^cloudflare-contact-form/" || true)
+  
+  # Change to cloudflare-contact-form directory and run its pre-commit hook
   cd cloudflare-contact-form
-
-  # Run format check
-  echo "Checking code formatting..."
-  if ! npm run format:check; then
-    echo "❌ Format check failed! Run 'npm run format' to fix."
-    exit 1
+  
+  # Check if the project has its own pre-commit hook
+  if [ -f ".husky/pre-commit" ]; then
+    # Pass the staged files to the project's pre-commit hook
+    ./.husky/pre-commit "$CF_STAGED_FILES"
+  else
+    echo "Warning: No pre-commit hook found in cloudflare-contact-form/.husky/"
   fi
-
-  # Run ESLint
-  echo "Running ESLint..."
-  if ! npm run lint; then
-    echo "❌ Lint check failed! Run 'npm run lint:fix' to fix some issues automatically."
-    exit 1
-  fi
-
-  # Check for CSS files and run stylelint if needed
-  if echo "$STAGED_FILES" | grep -q "^cloudflare-contact-form/.*\.css$"; then
-    echo "Running Stylelint..."
-    if ! npm run lint:css; then
-      echo "❌ CSS lint check failed! Run 'npm run lint:fix:css' to fix some issues automatically."
-      exit 1
-    fi
-  fi
-
-  echo "✅ All checks passed for cloudflare-contact-form!"
+  
+  cd ..
 fi
+
+# Add checks for other projects here as needed
+# Example:
+# if echo "$STAGED_FILES" | grep -q "^another-project/"; then
+#   cd another-project
+#   if [ -f ".husky/pre-commit" ]; then
+#     ./.husky/pre-commit
+#   fi
+#   cd ..
+# fi

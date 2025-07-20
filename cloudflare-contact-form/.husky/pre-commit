@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# Pre-commit hook for cloudflare-contact-form project
+# This script runs format and lint checks for the project
+
+set -e
+
+echo "Running cloudflare-contact-form pre-commit checks..."
+
+# Get the list of staged files from the parent directory
+STAGED_FILES="$1"
+
+# If no staged files are passed, get them ourselves (for standalone usage)
+if [ -z "$STAGED_FILES" ]; then
+  STAGED_FILES=$(git diff --cached --name-only | grep "^cloudflare-contact-form/" || true)
+fi
+
+# Exit if no relevant files are staged
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+# Run format check
+echo "Checking code formatting..."
+if ! npm run format:check; then
+  echo "❌ Format check failed! Run 'npm run format' to fix."
+  exit 1
+fi
+
+# Run ESLint
+echo "Running ESLint..."
+if ! npm run lint; then
+  echo "❌ Lint check failed! Run 'npm run lint:fix' to fix some issues automatically."
+  exit 1
+fi
+
+# Check for CSS files and run stylelint if needed
+if echo "$STAGED_FILES" | grep -q "\.css$"; then
+  echo "Running Stylelint..."
+  if ! npm run lint:css; then
+    echo "❌ CSS lint check failed! Run 'npm run lint:fix:css' to fix some issues automatically."
+    exit 1
+  fi
+fi
+
+echo "✅ All checks passed for cloudflare-contact-form!"
