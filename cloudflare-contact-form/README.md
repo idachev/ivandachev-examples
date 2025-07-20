@@ -27,8 +27,11 @@ This example demonstrates a serverless contact form using Cloudflare Pages Funct
    openssl rand -hex 32
 
    # Set the API key as a secret
-   wrangler secret put API_KEY
+   npx wrangler pages secret put API_KEY --project-name contact-form-app
    # Enter the generated key when prompted
+
+   # Verify the secret was uploaded
+   npx wrangler pages secret list --project-name contact-form-app
    ```
 
 4. Configure allowed origins for CORS (update in `wrangler.jsonc`):

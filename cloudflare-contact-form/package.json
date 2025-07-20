@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "wrangler pages dev public",
     "deploy": "wrangler pages deploy public",
-    "kv:create": "wrangler kv:namespace create kv_contact_submissions_example",
+    "kv:create": "wrangler kv namespace create kv_contact_submissions_example",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "format:html": "prettier --write \"**/*.html\"",
