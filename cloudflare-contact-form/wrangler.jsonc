@@ -9,7 +9,7 @@
       // used in your Worker JavaScript code to access the KV namespace functions
       "binding": "CONTACT_SUBMISSIONS",
       // Replace with your actual namespace ID after running: npm run kv:create
-      "id": "YOUR_KV_NAMESPACE_ID"
+      "id": "4594c5fceafc4f3fa72e68406ba88505"
     }
   ],
   
@@ -29,7 +29,7 @@
     "MAX_REQUESTS_PER_IP": 5,
 
     // Cloudflare Turnstile Site Key
-    "TURNSTILE_SITE_KEY": "YOUR_TURNSTILE_SITE_KEY"
+    "TURNSTILE_SITE_KEY": "0x4AAAAAABl2jCpCjcXhBmSx"
   }
   
   // Set API_KEY secret via wrangler CLI:
