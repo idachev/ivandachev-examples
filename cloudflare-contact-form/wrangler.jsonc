@@ -5,6 +5,8 @@
   
   "kv_namespaces": [
     {
+      // this is the name of the variable bind to env.CONTACT_SUBMISSIONS that can be
+      // used in your Worker JavaScript code to access the KV namespace functions
       "binding": "CONTACT_SUBMISSIONS",
       // Replace with your actual namespace ID after running: npm run kv:create
       "id": "YOUR_KV_NAMESPACE_ID"
@@ -20,9 +22,11 @@
     "MAX_NAME_LENGTH": 200,
     "MIN_MESSAGE_LENGTH": 50,
     "MAX_MESSAGE_LENGTH": 8000,
+
+    "SUBMISSION_EXPIRATION_DAYS": 90,
     
-    "RATE_LIMIT_WINDOW": 60,  // Time window in seconds (default: 60)
-    "MAX_REQUESTS": 5         // Max requests per window per IP (default: 5)
+    "RATE_LIMIT_WINDOW_SECONDS": 60,
+    "MAX_REQUESTS_PER_IP": 5
   }
   
   // Set API_KEY secret via wrangler CLI:

@@ -1,3 +1,5 @@
+import { StatusCodes } from "http-status-codes";
+
 function getCorsHeaders(request, env) {
   const origin = request.headers.get("Origin") || "";
   const allowedOrigins = env.ALLOWED_ORIGINS
@@ -18,7 +20,7 @@ function getCorsHeaders(request, env) {
   };
 }
 
-function createJsonResponse(data, status = 200, corsHeaders = {}) {
+function createJsonResponse(data, status = StatusCodes.OK, corsHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -30,23 +32,23 @@ function createJsonResponse(data, status = 200, corsHeaders = {}) {
 
 export async function onRequestOptions({ request, env }) {
   return new Response(null, {
-    status: 204,
+    status: StatusCodes.NO_CONTENT,
     headers: getCorsHeaders(request, env),
   });
 }
 
 async function checkRateLimit(env, clientIp) {
-  const rateLimitWindow = (env.RATE_LIMIT_WINDOW || 60) * 1000;
-  const maxRequests = env.MAX_REQUESTS || 5;
+  const rateLimitWindowSeconds = (env.RATE_LIMIT_WINDOW_SECONDS || 60) * 1000;
+  const maxRequestsPerIP = env.MAX_REQUESTS_PER_IP || 5;
   const rateLimitKey = `ratelimit-${clientIp}`;
   const attempts = await env.CONTACT_SUBMISSIONS.get(rateLimitKey);
 
-  if (attempts && parseInt(attempts) >= maxRequests) {
+  if (attempts && parseInt(attempts) >= maxRequestsPerIP) {
     return { limited: true };
   }
 
   await env.CONTACT_SUBMISSIONS.put(rateLimitKey, String((parseInt(attempts) || 0) + 1), {
-    expirationTtl: rateLimitWindow / 1000,
+    expirationTtl: rateLimitWindowSeconds / 1000,
   });
 
   return { limited: false };
@@ -98,6 +100,7 @@ function validateFormFields(name, email, message, env) {
 
 export async function onRequestPost({ request, env }) {
   const corsHeaders = getCorsHeaders(request, env);
+  const submissionExpirationDays = env.SUBMISSION_EXPIRATION_DAYS || 90;
 
   try {
     const clientIp = request.headers.get("CF-Connecting-IP") || "unknown";
@@ -105,19 +108,23 @@ export async function onRequestPost({ request, env }) {
     if (!env.CONTACT_SUBMISSIONS) {
       return createJsonResponse(
         { error: "Contact form is not configured properly. Please try again later." },
-        503,
+        StatusCodes.SERVICE_UNAVAILABLE,
         corsHeaders
       );
     }
 
     const rateLimitResult = await checkRateLimit(env, clientIp);
     if (rateLimitResult.limited) {
-      return createJsonResponse({ error: "Too many requests. Please try again later." }, 429, corsHeaders);
+      return createJsonResponse(
+        { error: "Too many requests. Please try again later." },
+        StatusCodes.TOO_MANY_REQUESTS,
+        corsHeaders
+      );
     }
 
     const formData = await parseFormData(request);
     if (!formData) {
-      return createJsonResponse({ error: "Unsupported content type" }, 400, corsHeaders);
+      return createJsonResponse({ error: "Unsupported content type" }, StatusCodes.BAD_REQUEST, corsHeaders);
     }
 
     let { name, email, message } = formData;
@@ -127,7 +134,7 @@ export async function onRequestPost({ request, env }) {
 
     const validation = validateFormFields(name, email, message, env);
     if (validation.error) {
-      return createJsonResponse({ error: validation.error }, 400, corsHeaders);
+      return createJsonResponse({ error: validation.error }, StatusCodes.BAD_REQUEST, corsHeaders);
     }
 
     const timestamp = Date.now();
@@ -146,7 +153,7 @@ export async function onRequestPost({ request, env }) {
     };
 
     await env.CONTACT_SUBMISSIONS.put(submissionId, JSON.stringify(submission), {
-      expirationTtl: 60 * 60 * 24 * 90, // 90 days
+      expirationTtl: submissionExpirationDays * 24 * 60 * 60,
       metadata: {
         email: submission.email,
         timestamp: submission.timestamp,
@@ -162,13 +169,17 @@ export async function onRequestPost({ request, env }) {
         message: "Your message has been sent successfully!",
         timestamp: submission.timestamp,
       },
-      200,
+      StatusCodes.OK,
       corsHeaders
     );
   } catch (error) {
     console.error("Error processing contact form:", error);
 
-    return createJsonResponse({ error: "An internal error occurred. Please try again later." }, 500, corsHeaders);
+    return createJsonResponse(
+      { error: "An internal error occurred. Please try again later." },
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      corsHeaders
+    );
   }
 }
 
@@ -184,13 +195,13 @@ export async function onRequestGet({ request, env }) {
         status: "Contact form API is running",
         timestamp: new Date().toISOString(),
       },
-      200,
+      StatusCodes.OK,
       corsHeaders
     );
   }
 
   if (!env.CONTACT_SUBMISSIONS) {
-    return createJsonResponse({ error: "KV not configured" }, 500, corsHeaders);
+    return createJsonResponse({ error: "KV not configured" }, StatusCodes.INTERNAL_SERVER_ERROR, corsHeaders);
   }
 
   try {
@@ -199,7 +210,11 @@ export async function onRequestGet({ request, env }) {
     const maxLimit = 1000;
 
     if (limit < 1 || limit > maxLimit) {
-      return createJsonResponse({ error: `Limit must be between 1 and ${maxLimit}` }, 400, corsHeaders);
+      return createJsonResponse(
+        { error: `Limit must be between 1 and ${maxLimit}` },
+        StatusCodes.BAD_REQUEST,
+        corsHeaders
+      );
     }
 
     const {
@@ -216,6 +231,7 @@ export async function onRequestGet({ request, env }) {
 
     for (const key of keys) {
       const data = await env.CONTACT_SUBMISSIONS.get(key.name);
+
       if (data) {
         submissions.push(JSON.parse(data));
       }
@@ -229,12 +245,12 @@ export async function onRequestGet({ request, env }) {
         count: submissions.length,
         timestamp: new Date().toISOString(),
       },
-      200,
+      StatusCodes.OK,
       corsHeaders
     );
   } catch (error) {
     console.error("Error fetching submissions:", error);
 
-    return createJsonResponse({ error: "Failed to fetch submissions" }, 500, corsHeaders);
+    return createJsonResponse({ error: "Failed to fetch submissions" }, StatusCodes.INTERNAL_SERVER_ERROR, corsHeaders);
   }
 }

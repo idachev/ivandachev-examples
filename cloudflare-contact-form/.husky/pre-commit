@@ -1,4 +1,6 @@
 #!/bin/bash
+[ "$1" = -x ] && shift && set -x
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Pre-commit hook for cloudflare-contact-form project
 # This script runs format and lint checks for the project
@@ -20,27 +22,9 @@ if [ -z "$STAGED_FILES" ]; then
   exit 0
 fi
 
-# Run format check
-echo "Checking code formatting..."
-if ! npm run format:check; then
-  echo "❌ Format check failed! Run 'npm run format' to fix."
-  exit 1
-fi
+# Run code checks
+echo "Running code checks..."
+${DIR}/../utils/code-check.sh
 
-# Run ESLint
-echo "Running ESLint..."
-if ! npm run lint; then
-  echo "❌ Lint check failed! Run 'npm run lint:fix' to fix some issues automatically."
-  exit 1
-fi
-
-# Check for CSS files and run stylelint if needed
-if echo "$STAGED_FILES" | grep -q "\.css$"; then
-  echo "Running Stylelint..."
-  if ! npm run lint:css; then
-    echo "❌ CSS lint check failed! Run 'npm run lint:fix:css' to fix some issues automatically."
-    exit 1
-  fi
-fi
-
-echo "✅ All checks passed for cloudflare-contact-form!"
+# If checks fail, the commit will be aborted
+# The user will be prompted to run ./utils/code-format.sh to fix issues

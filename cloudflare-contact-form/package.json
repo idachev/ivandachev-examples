@@ -27,5 +27,8 @@
     "stylelint": "^16.22.0",
     "stylelint-config-standard": "^38.0.0",
     "wrangler": "^4.25.0"
+  },
+  "dependencies": {
+    "http-status-codes": "^2.3.0"
   }
 }
