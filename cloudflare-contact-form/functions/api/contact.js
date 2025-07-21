@@ -54,6 +54,25 @@ async function checkRateLimit(env, clientIp) {
   return { limited: false };
 }
 
+async function verifyTurnstile(token, secretKey, clientIp) {
+  const verifyUrl = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+
+  const formData = new FormData();
+  formData.append("secret", secretKey);
+  formData.append("response", token);
+  if (clientIp) {
+    formData.append("remoteip", clientIp);
+  }
+
+  const response = await fetch(verifyUrl, {
+    method: "POST",
+    body: formData,
+  });
+
+  const result = await response.json();
+  return result.success === true;
+}
+
 async function parseFormData(request) {
   const contentType = request.headers.get("Content-Type") || "";
 
@@ -66,6 +85,7 @@ async function parseFormData(request) {
       name: formData.get("name"),
       email: formData.get("email"),
       message: formData.get("message"),
+      "cf-turnstile-response": formData.get("cf-turnstile-response"),
     };
   }
 
@@ -125,6 +145,27 @@ export async function onRequestPost({ request, env }) {
     const formData = await parseFormData(request);
     if (!formData) {
       return createJsonResponse({ error: "Unsupported content type" }, StatusCodes.BAD_REQUEST, corsHeaders);
+    }
+
+    // Verify Turnstile token
+    const turnstileToken = formData["cf-turnstile-response"];
+    if (!turnstileToken) {
+      return createJsonResponse(
+        { error: "Please complete the security challenge" },
+        StatusCodes.BAD_REQUEST,
+        corsHeaders
+      );
+    }
+
+    if (env.TURNSTILE_SECRET_KEY) {
+      const isValidToken = await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY, clientIp);
+      if (!isValidToken) {
+        return createJsonResponse(
+          { error: "Security challenge verification failed. Please try again." },
+          StatusCodes.BAD_REQUEST,
+          corsHeaders
+        );
+      }
     }
 
     let { name, email, message } = formData;

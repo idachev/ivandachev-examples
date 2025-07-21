@@ -44,6 +44,10 @@
 
         <input type="hidden" id="form-redirect_url" value="/success.html" />
 
+        <div class="form__group">
+          <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITE_KEY"></div>
+        </div>
+
         <div id="form-submit-holder">
           <button type="submit">Send Message</button>
         </div>
@@ -54,6 +58,7 @@
       <div id="message" class="message"></div>
     </div>
 
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="contact-form-validation.js"></script>
   </body>
 </html>

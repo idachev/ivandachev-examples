@@ -75,6 +75,16 @@ function validateContactForm() {
 
   const lang = contentLanguageMeta ? contentLanguageMeta.getAttribute("content") : "en";
 
+  // Validate Turnstile
+  const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]');
+  if (!turnstileResponse || !turnstileResponse.value) {
+    isValid = false;
+    showError(
+      ERROR_MESSAGE_HOLDER,
+      lang === "bg" ? "Моля, завършете проверката за сигурност" : "Please complete the security challenge"
+    );
+  }
+
   if (name === "" || name.length < MIN_NAME_LENGTH || name.length > MAX_NAME_LENGTH) {
     isValid = false;
     showError(
