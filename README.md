@@ -2,4 +2,4 @@
 
 This repository contains examples of software projects:
 
-* A contact form using Cloudflare Pages, KV storage, and Functions. See `./cloudflare-contact-form/README.md` for details.
+* A contact form using Cloudflare Pages, KV storage, and Functions. See [cloudflare-contact-form/README.md](./cloudflare-contact-form/README.md) for details.
