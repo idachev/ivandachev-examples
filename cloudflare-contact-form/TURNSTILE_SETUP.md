@@ -1,111 +1,107 @@
 # Cloudflare Turnstile Setup Guide
 
-This guide explains how to set up Cloudflare Turnstile for the contact form.
+This guide explains how Cloudflare Turnstile is integrated into the contact form's public code.
 
-## Prerequisites
+## Overview
 
-- A Cloudflare account
-- Access to your Cloudflare dashboard
+The contact form uses Cloudflare Turnstile to protect against spam and automated submissions. Turnstile is integrated into the frontend HTML and validated in the client-side JavaScript.
 
-## Step 1: Create a Turnstile Site
+## Integration in Public Code
 
-1. Log in to your [Cloudflare dashboard](https://dash.cloudflare.com/)
-2. Navigate to **Turnstile** in the sidebar
-3. Click **Add Site**
-4. Configure your site:
-   - **Site name**: Your site name (e.g., "Contact Form")
-   - **Domain**: Your domain(s) where the form will be used
-   - **Widget Mode**: Choose "Managed" (recommended) or "Invisible"
-   - **Pre-clearance**: Optional - for returning visitors
-5. Click **Create**
-6. Copy the **Site Key** and **Secret Key**
+### 1. HTML Integration (`public/index.html`)
 
-## Step 2: Configure the Application
-
-### Update HTML
-
-Replace `YOUR_TURNSTILE_SITE_KEY` in `public/index.html` with your actual site key:
+The Turnstile widget is included in the form:
 
 ```html
-<div class="cf-turnstile" data-sitekey="0x4AAAAAABl2bABjZGRahwXR"></div>
+<!-- Turnstile widget container -->
+<div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITE_KEY"></div>
+
+<!-- Turnstile API script -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 ```
 
-### Update Wrangler Configuration
+The widget is placed within the form, before the submit button. When users interact with it, Turnstile automatically creates a hidden input field `cf-turnstile-response` containing the verification token.
 
-Replace `YOUR_TURNSTILE_SITE_KEY` in `wrangler.jsonc`:
+### 2. Client-Side Validation (`public/contact-form-validation.js`)
 
-```json
-"TURNSTILE_SITE_KEY": "0x4AAAAAABl2bABjZGRahwXR"
+The validation script checks for the Turnstile token before form submission:
+
+```javascript
+// Lines 78-86: Validate Turnstile
+const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]');
+if (!turnstileResponse || !turnstileResponse.value) {
+  isValid = false;
+  showError(
+    ERROR_MESSAGE_HOLDER,
+    lang === "bg" ? "Моля, завършете проверката за сигурност" : "Please complete the security challenge"
+  );
+}
 ```
 
-### Set the Secret Key
+### 3. Form Submission
 
-Use Wrangler CLI to set the secret key:
+When the form is submitted, the Turnstile token is automatically included in the form data:
+
+```javascript
+// Lines 24-26: Form data includes Turnstile token
+const formData = new FormData(event.target);
+const data = Object.fromEntries(formData);
+// data now includes: { name, email, message, 'cf-turnstile-response': 'token...' }
+```
+
+## Configuration
+
+### Site Key Configuration
+
+The Turnstile site key needs to be configured in two places:
+
+1. **In `public/index.html`**: Replace `YOUR_TURNSTILE_SITE_KEY` with your actual site key
+2. **In `wrangler.jsonc`**: Set the `TURNSTILE_SITE_KEY` variable (though not used in public code)
+
+### Secret Key Configuration (for Cloudflare Pages)
+
+The secret key is set using the Cloudflare Pages CLI:
 
 ```bash
-wrangler secret put TURNSTILE_SECRET_KEY
-# When prompted, paste your secret key
+npx wrangler pages secret put TURNSTILE_SECRET_KEY --project-name contact-form-app
+# Enter your secret key when prompted
 ```
 
-## Step 3: Test Your Setup
+## Widget Customization
 
-1. Run the development server:
-
-   ```bash
-   npm run dev
-   ```
-
-2. Open the contact form in your browser
-3. You should see the Turnstile widget above the submit button
-4. Try submitting the form:
-   - Without completing Turnstile → Should show client-side error
-   - With completed Turnstile → Should submit successfully
-
-## Turnstile Widget Options
-
-You can customize the widget appearance by adding data attributes:
+You can customize the Turnstile widget appearance by adding data attributes:
 
 ```html
 <div
   class="cf-turnstile"
   data-sitekey="YOUR_SITE_KEY"
-  data-theme="light"
-  data-size="normal"
-  data-appearance="always"
+  data-theme="light"        <!-- Options: "light", "dark", "auto" -->
+  data-size="normal"         <!-- Options: "normal", "compact" -->
+  data-appearance="always"   <!-- Options: "always", "execute", "interaction-only" -->
+  data-language="en"         <!-- Language code or "auto" -->
 ></div>
 ```
 
-### Available Options:
+## How It Works
 
-- `data-theme`: "light", "dark", "auto" (default: "auto")
-- `data-size`: "normal", "compact" (default: "normal")
-- `data-appearance`: "always", "execute", "interaction-only" (default: "always")
-- `data-language`: "auto" or specific language code (e.g., "en", "bg")
+1. **Page Load**: The Turnstile API script loads and renders the widget
+2. **User Interaction**: User completes the Turnstile challenge
+3. **Token Generation**: Turnstile creates a hidden input with the verification token
+4. **Form Validation**: JavaScript validates that the token exists before submission
+5. **Form Submission**: Token is sent with form data to the backend for verification
 
-## Security Notes
+## Development and Testing
 
-1. **Never expose your Secret Key** - It should only be stored as a Wrangler secret
-2. **Always verify on server-side** - Client-side validation can be bypassed
-3. **Token expiration** - Turnstile tokens expire after 5 minutes
-4. **One-time use** - Each token can only be verified once
+For local development:
 
-## Troubleshooting
-
-### Widget not appearing
-
-- Check that the site key is correct
-- Ensure the domain is added to your Turnstile site configuration
-- Check browser console for errors
-
-### Verification failing
-
-- Verify the secret key is set correctly
-- Check that the token is being sent with the form data
-- Ensure the domain matches your Turnstile configuration
-
-### Development/Testing
-
-- For local development, add `localhost` to your Turnstile domains
-- You can use Turnstile's test keys for development:
+- Add `localhost` to your Turnstile site's allowed domains
+- Use test keys for development:
   - Always passes: `1x00000000000000000000AA`
   - Always fails: `2x00000000000000000000AB`
+
+## Important Notes
+
+- The token expires after 5 minutes
+- Each token can only be used once
+- Client-side validation provides immediate feedback but server-side verification is essential
+- The widget supports multiple languages through the `data-language` attribute
