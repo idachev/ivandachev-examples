@@ -14,9 +14,17 @@
   ],
   
   "vars": {
-    // Comma-separated list of allowed origins for CORS
+    // Comma-separated list of allowed origins. Each entry must equal the browser's Origin
+    // exactly (scheme, host and port, no trailing slash). A POST from any other Origin, or
+    // with no Origin, gets 403 and nothing is stored. The site's own origin (including a
+    // *.pages.dev preview host) is always allowed and does not need to be listed.
     // In production, set this to your actual domain(s)
     "ALLOWED_ORIGINS": "https://yourdomain.com,https://www.yourdomain.com",
+
+    // Local development only: allow http://localhost:<port> and http://127.0.0.1:<port>.
+    // Only the string "true" enables it. Keep it out of the production vars; set it in your
+    // local .dev.vars instead:
+    // "ALLOW_LOCALHOST": "true",
     
     "MIN_NAME_LENGTH": 2,
     "MAX_NAME_LENGTH": 200,
@@ -36,6 +44,7 @@
   // wrangler secret put API_KEY
   // Generate a secure key: openssl rand -hex 32
 
-  // Set TURNSTILE_SECRET_KEY via wrangler CLI:
+  // Set TURNSTILE_SECRET_KEY via wrangler CLI (required: without it a POST from an allowed
+  // origin returns 500 {"error": "server not configured"} and nothing is stored):
   // wrangler secret put TURNSTILE_SECRET_KEY
 }

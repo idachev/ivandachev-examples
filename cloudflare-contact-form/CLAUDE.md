@@ -64,7 +64,12 @@ npm run lint:css       # Run Stylelint on CSS files
 
 ## Environment Variables
 
-- `CONTACT_FORM_SUBMISSIONS`: KV namespace binding for storing form submissions
+- `CONTACT_SUBMISSIONS`: KV namespace binding for storing form submissions
+- `ALLOWED_ORIGINS`: comma-separated origins, exact match; the site's own origin is always allowed
+- `ALLOW_LOCALHOST`: `"true"` allows `http://localhost:<port>` / `http://127.0.0.1:<port>`
+  (local `.dev.vars` only, never production)
+- `TURNSTILE_SECRET_KEY` (secret): required; without it a POST from an allowed origin returns
+  500 `server not configured` (a missing or refused origin gets 403 first)
 
 ## Important Notes
 

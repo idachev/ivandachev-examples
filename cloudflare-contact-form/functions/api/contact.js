@@ -1,23 +1,49 @@
 import { StatusCodes } from "http-status-codes";
 
-function getCorsHeaders(request, env) {
-  const origin = request.headers.get("Origin") || "";
-  const allowedOrigins = env.ALLOWED_ORIGINS
-    ? env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
-    : ["http://localhost:8788", "http://localhost:4000"];
+const LOCALHOST_ORIGIN_PATTERN = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
 
-  let allowedOrigin = allowedOrigins.find((allowed) => origin.startsWith(allowed));
-
-  if (!allowedOrigin && origin.match(/^http:\/\/localhost:\d+$/)) {
-    allowedOrigin = origin;
+/**
+ * Returns the request's Origin when it is allowed, otherwise null.
+ * Allowed: the function's own origin (same-origin, e.g. a *.pages.dev preview), an exact
+ * ALLOWED_ORIGINS entry, or http://localhost:<port> / http://127.0.0.1:<port> when
+ * ALLOW_LOCALHOST is the string "true".
+ */
+function getAllowedOrigin(request, env) {
+  const origin = request.headers.get("Origin");
+  if (!origin) {
+    return null;
   }
 
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin || allowedOrigins[0],
+  if (origin === new URL(request.url).origin) {
+    return origin;
+  }
+
+  const allowedOrigins = String(env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry !== "");
+  if (allowedOrigins.includes(origin)) {
+    return origin;
+  }
+
+  if (env.ALLOW_LOCALHOST === "true" && LOCALHOST_ORIGIN_PATTERN.test(origin)) {
+    return origin;
+  }
+
+  return null;
+}
+
+function getCorsHeaders(allowedOrigin) {
+  const headers = {
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, X-API-Key",
     "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
   };
+  if (allowedOrigin) {
+    headers["Access-Control-Allow-Origin"] = allowedOrigin;
+  }
+  return headers;
 }
 
 function createJsonResponse(data, status = StatusCodes.OK, corsHeaders = {}) {
@@ -33,7 +59,7 @@ function createJsonResponse(data, status = StatusCodes.OK, corsHeaders = {}) {
 export async function onRequestOptions({ request, env }) {
   return new Response(null, {
     status: StatusCodes.NO_CONTENT,
-    headers: getCorsHeaders(request, env),
+    headers: getCorsHeaders(getAllowedOrigin(request, env)),
   });
 }
 
@@ -119,7 +145,19 @@ function validateFormFields(name, email, message, env) {
 }
 
 export async function onRequestPost({ request, env }) {
-  const corsHeaders = getCorsHeaders(request, env);
+  const allowedOrigin = getAllowedOrigin(request, env);
+  if (!allowedOrigin) {
+    // Missing or foreign Origin: refuse before any KV access or Turnstile call.
+    return createJsonResponse({ error: "Forbidden" }, StatusCodes.FORBIDDEN, getCorsHeaders(null));
+  }
+
+  const corsHeaders = getCorsHeaders(allowedOrigin);
+  if (!env.TURNSTILE_SECRET_KEY) {
+    // Without the secret the Turnstile check cannot run, so nothing is accepted or stored.
+    console.error("TURNSTILE_SECRET_KEY is not set; contact form submissions are refused");
+    return createJsonResponse({ error: "server not configured" }, StatusCodes.INTERNAL_SERVER_ERROR, corsHeaders);
+  }
+
   const submissionExpirationDays = env.SUBMISSION_EXPIRATION_DAYS || 90;
 
   try {
@@ -157,15 +195,13 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
-    if (env.TURNSTILE_SECRET_KEY) {
-      const isValidToken = await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY, clientIp);
-      if (!isValidToken) {
-        return createJsonResponse(
-          { error: "Security challenge verification failed. Please try again." },
-          StatusCodes.BAD_REQUEST,
-          corsHeaders
-        );
-      }
+    const isValidToken = await verifyTurnstile(turnstileToken, env.TURNSTILE_SECRET_KEY, clientIp);
+    if (!isValidToken) {
+      return createJsonResponse(
+        { error: "Security challenge verification failed. Please try again." },
+        StatusCodes.BAD_REQUEST,
+        corsHeaders
+      );
     }
 
     let { name, email, message } = formData;
@@ -225,7 +261,9 @@ export async function onRequestPost({ request, env }) {
 }
 
 export async function onRequestGet({ request, env }) {
-  const corsHeaders = getCorsHeaders(request, env);
+  // GET is also called without an Origin (curl with the API key), so it is not refused here;
+  // only the CORS header follows the origin rules.
+  const corsHeaders = getCorsHeaders(getAllowedOrigin(request, env));
 
   const url = new URL(request.url);
   const apiKey = url.searchParams.get("api_key") || request.headers.get("X-API-Key");
