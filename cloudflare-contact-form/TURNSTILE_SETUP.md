@@ -67,6 +67,21 @@ npx wrangler pages secret put TURNSTILE_SECRET_KEY --project-name contact-form-a
 # Enter your secret key when prompted
 ```
 
+The secret key is required. Without it a `POST /api/contact` from an allowed origin returns
+`500 {"error": "server not configured"}`, verifies nothing and stores nothing (a missing or
+refused origin still gets 403 first).
+
+### Hostnames and Origins
+
+The function accepts a POST only from an allowed `Origin`: its own origin, an exact
+`ALLOWED_ORIGINS` entry, or `http://localhost:<port>` when `ALLOW_LOCALHOST` is `"true"` (see the
+README's Origin rules). Keep the Turnstile widget's hostname list in step with that:
+
+- add every production domain listed in `ALLOWED_ORIGINS`;
+- if you test the form on Cloudflare Pages preview hosts (`<hash>.<project>.pages.dev`), add
+  `<project>.pages.dev` (or the exact preview host): the function accepts a preview host as
+  same-origin, but the Turnstile widget must also allow it.
+
 ## Widget Customization
 
 You can customize the Turnstile widget appearance by adding data attributes:
@@ -95,9 +110,13 @@ You can customize the Turnstile widget appearance by adding data attributes:
 For local development:
 
 - Add `localhost` to your Turnstile site's allowed domains
+- Set `TURNSTILE_SECRET_KEY` in your local `.dev.vars` (a test secret is fine), otherwise the
+  dev server answers every POST from an allowed origin with 500
+- To post from another local port, also set `ALLOW_LOCALHOST=true` in `.dev.vars`
 - Use test keys for development:
   - Always passes: `1x00000000000000000000AA`
   - Always fails: `2x00000000000000000000AB`
+  - Secret key that always passes: `1x0000000000000000000000000000000AA`
 
 ## Important Notes
 

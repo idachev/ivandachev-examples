@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "wrangler pages dev public",
     "deploy": "wrangler pages deploy public",
+    "test": "node --test tests/*.test.js",
     "kv:create": "wrangler kv namespace create kv_contact_submissions_example",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
